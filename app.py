@@ -10,9 +10,9 @@ CORS(app)
 def generate_zpl():
 
     print("hello world!")
-    data = request.get_json()
+    #data = request.get_json()
 
-    print("hello world!",data)
+    #print("hello world!",data)
     start = "^XA"
     end = "^XZ"
     label_pos = "^FT"
@@ -24,8 +24,22 @@ def generate_zpl():
     input_text = ['product_code','product_name','customer_code','customer_name']
     input_label = ['product_code','product_name','customer_code','customer_name']
     
+    #is_barcode = data['is_barcode']
+    #is_qrcode = data['is_qrcode']
     # input_text = data['label_text']
     # input_label = data['label_values']
+    # company_name = data['company_name']
+    # address = data['address']
+
+    if is_barcode == True:
+        #zpl with barcode
+        pass
+    elif is_qrcode == True:
+        #zpl with qrcode
+        pass
+    else:
+        #zpl without qr barcode
+        pass
 
 
     input_field = "product_name"
@@ -44,14 +58,32 @@ def generate_zpl():
     code.append(start)
     code.append(change_font)
     
-    for num in range(1, len(input_text)):
+    for num in range(0, len(input_text)):
         print("_____________________________",input_text[num])
         print("******************************",input_label[num])
         
         y_start_label = y_start_label+y_diff_label
         y_start_value = y_start_value + y_diff_value
+        
+        # f"{data['total_weight']}"
+        ## f"{data[+'input_label[num]+']}"
 
-        code.append(start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+input_label[num]+end_of_field)  
+        value1 = 'f'
+        doub = '"'
+        value2 = " {data[ "
+        value3 = """ ]} " """
+
+        value = value1 + doub + value2 + input_label[num] + doub + value3
+        
+        # original_string = 'This is a "{}" word'
+        # formatted_string = original_string.format('quoted')
+        
+        val = value1+"{}"+value3
+        val_in = val.format 
+        #print(doub)
+        print(value)
+        total_var =start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+value+end_of_field
+        code.append(total_var)
     
     code.append(end)
     #total = start + change_font + code +end
@@ -114,7 +146,7 @@ def select_labels():
     return {"success": True,"data":list_of_dicts}
     #return jsonify({'data':rows}), 200
 
-@app.route('/select_units', methods=['POST'])
+@app.route('/select_units', methods=['GET'])
 def select_units():
     """
     Query all rows in the tasks table
@@ -140,7 +172,7 @@ def select_units():
 
     return {"success": True,"data":list_of_dicts}
 
-@app.route('/select_date_time', methods=['POST'])
+@app.route('/select_date_time', methods=['GET'])
 def select_date_time():
     """
     Query all rows in the tasks table
