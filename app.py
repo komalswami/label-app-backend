@@ -21,28 +21,26 @@ def generate_zpl():
     change_font = "^CF0,30"
     start_of_field ="^FO"
     end_of_field = "^FS"
-    # input_text = ['product_code','product_name','customer_code','customer_name']
-    # input_label = ['product_code','product_name','customer_code','customer_name']
+    input_text = ['product_code','product_name','customer_code','customer_name']
+    input_label = ['product_code','product_name','customer_code','customer_name']
     
-    is_barcode = data['is_barcode']
-    is_qrcode = data['is_qrcode']
-    input_text = data['label_text']
-    input_label = data['label_values']
-    company_name = data['company_name']
-    address = data['address']
+    # is_barcode = data['is_barcode']
+    # is_qrcode = data['is_qrcode']
+    # input_text = data['label_text']
+    # input_label = data['label_values']
+    # company_name = data['company_name']
+    # address = data['address']'
 
-    is_barcode = True
+    company_name = "company name"
+    address = "address"
+
+    # ^FO100,100^BY3
+    # ^BCN,100,Y,N,N
+    # ^FD123456^FS
+
+    is_barcode = False
     is_qrcode = True
 
-    if is_barcode == True:
-        #zpl with barcode
-        pass
-    elif is_qrcode == True:
-        #zpl with qrcode
-        pass
-    else:
-        #zpl without qr barcode
-        pass
 
 
     input_field = "product_name"
@@ -62,7 +60,7 @@ def generate_zpl():
 
     code = []
     code.append(start)
-    code.append(start_of_head)
+    code.append(head)
 
     
 
@@ -97,6 +95,19 @@ def generate_zpl():
         total_var =start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+value+end_of_field
         code.append(total_var)
     
+    if is_barcode == True:
+        #zpl with barcode
+        barcode =  "^FO"+str(x_start_value)+","+str(y_start_value+y_diff_value)+"^BY3" + "^BCN,100,Y,N,N" + "^FD" + "123456" +"^FS"
+        code.append(barcode)
+    elif is_qrcode == True:
+        #^FO100,100^BQN,2,4
+        #^FDMM,AAC-42^FS
+        barcode =  "^FO"+str(x_start_value)+","+str(y_start_value+y_diff_value)+"^BQN,2,4 ^FDMM,AAC-42" +"^FS"
+        code.append(barcode)
+    else:
+        #zpl without qr barcode
+        pass
+
     code.append(end)
     #total = start + change_font + code +end
 
@@ -110,9 +121,9 @@ def generate_zpl():
     f.write(result_string)
     f.close()
 
-    total = np.array(code)
+    #total = np.array(code)
     #print(start+label_pos+label_text+input_field+end)
-    print(total)
+    #print(total)
 
     return{"success":True,"data":result_string }
 
