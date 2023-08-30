@@ -38,8 +38,8 @@ def generate_zpl():
     # ^BCN,100,Y,N,N
     # ^FD123456^FS
 
-    is_barcode = False
-    is_qrcode = True
+    is_barcode = True
+    is_qrcode = False
 
 
 
@@ -56,17 +56,15 @@ def generate_zpl():
     y_diff_value = 30
 
     #start_of_head = "^CF0,60" 
-    head = start_of_field+str(x_start_label) +","+str(y_start_label)+start_of_field+company_name+end_of_field
+    head = start_of_field+str(x_start_label) +","+str(30)+label_text_tag+company_name+end_of_field
 
     code = []
     code.append(start)
+    code.append("^CF0,30")
     code.append(head)
 
+    address = start_of_field+str(x_start_label) +","+str(60)+label_text_tag+address+end_of_field
     
-
-    address = start_of_field+str(x_start_label) +","+str(y_start_label)+start_of_field+address+end_of_field
-
-    code.append(head)
     code.append(address)
     code.append(change_font)
     
@@ -93,16 +91,25 @@ def generate_zpl():
         #print(doub)
         print(value)
         total_var =start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+value+end_of_field
+        print("-----------------------------  val in for loop----------------------------",total_var)
         code.append(total_var)
     
+    items = ""
+    #data for barcode
+    for num in range(0, len(input_text)):
+        item = 'f' + '"'+input_text[num] + ":"+ "{data['" + input_label[num] + "']}" + '"'
+        items+= "+"+item
+    
+    print("------------------------------ items ----------------------------",items)
+
     if is_barcode == True:
         #zpl with barcode
-        barcode =  "^FO"+str(x_start_value)+","+str(y_start_value+y_diff_value)+"^BY3" + "^BCN,100,Y,N,N" + "^FD" + "123456" +"^FS"
+        barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BY3" + "^BCN,100,Y,N,N" + "^FD" + items +"^FS"
         code.append(barcode)
     elif is_qrcode == True:
         #^FO100,100^BQN,2,4
         #^FDMM,AAC-42^FS
-        barcode =  "^FO"+str(x_start_value)+","+str(y_start_value+y_diff_value)+"^BQN,2,4 ^FDMM,AAC-42" +"^FS"
+        barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BQN,2,4 ^FDMM,AAC-42" +"^FS"
         code.append(barcode)
     else:
         #zpl without qr barcode
@@ -115,6 +122,15 @@ def generate_zpl():
 
     result_string = delimiter.join(code)
     print(result_string)  # Output: 'apple, banana, cherry'
+
+    # f"^FO300,490^BQN,2,4^FD Customer : {data['customer_name']}"
+    #         + f"Item Description: {data['product_name']}"
+    #         + f"Part / DRG No: {data['product_code']}"
+    #         + f"Quantity: {data['quantity']} Nos"
+    #         + f"Batch No: {data['batch_code']}"
+    #         + f"Net Weight: {data['net_weight']} g"
+    #         + f"MFG Date:{data['timestamp']} "
+    #         + f"Time:{data['time']}^FS
 
 
     f = open("label.zpl", "w")
