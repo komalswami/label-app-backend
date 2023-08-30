@@ -21,15 +21,18 @@ def generate_zpl():
     change_font = "^CF0,30"
     start_of_field ="^FO"
     end_of_field = "^FS"
-    input_text = ['product_code','product_name','customer_code','customer_name']
-    input_label = ['product_code','product_name','customer_code','customer_name']
+    # input_text = ['product_code','product_name','customer_code','customer_name']
+    # input_label = ['product_code','product_name','customer_code','customer_name']
     
-    #is_barcode = data['is_barcode']
-    #is_qrcode = data['is_qrcode']
-    # input_text = data['label_text']
-    # input_label = data['label_values']
-    # company_name = data['company_name']
-    # address = data['address']
+    is_barcode = data['is_barcode']
+    is_qrcode = data['is_qrcode']
+    input_text = data['label_text']
+    input_label = data['label_values']
+    company_name = data['company_name']
+    address = data['address']
+
+    is_barcode = True
+    is_qrcode = True
 
     if is_barcode == True:
         #zpl with barcode
@@ -54,8 +57,19 @@ def generate_zpl():
     y_diff_label = 30
     y_diff_value = 30
 
+    #start_of_head = "^CF0,60" 
+    head = start_of_field+str(x_start_label) +","+str(y_start_label)+start_of_field+company_name+end_of_field
+
     code = []
     code.append(start)
+    code.append(start_of_head)
+
+    
+
+    address = start_of_field+str(x_start_label) +","+str(y_start_label)+start_of_field+address+end_of_field
+
+    code.append(head)
+    code.append(address)
     code.append(change_font)
     
     for num in range(0, len(input_text)):
@@ -70,16 +84,14 @@ def generate_zpl():
 
         value1 = 'f'
         doub = '"'
-        value2 = " {data[ "
-        value3 = """ ]} " """
+        value2 = "{data['"
+        value3 = """']}"""
 
-        value = value1 + doub + value2 + input_label[num] + doub + value3
+        value = value1 + doub + value2 + input_label[num] + value3 + doub
         
         # original_string = 'This is a "{}" word'
         # formatted_string = original_string.format('quoted')
         
-        val = value1+"{}"+value3
-        val_in = val.format 
         #print(doub)
         print(value)
         total_var =start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+value+end_of_field
@@ -88,11 +100,21 @@ def generate_zpl():
     code.append(end)
     #total = start + change_font + code +end
 
+    delimiter = ','  # Delimiter to be used between elements
+
+    result_string = delimiter.join(code)
+    print(result_string)  # Output: 'apple, banana, cherry'
+
+
+    f = open("label.zpl", "w")
+    f.write(result_string)
+    f.close()
+
     total = np.array(code)
     #print(start+label_pos+label_text+input_field+end)
     print(total)
 
-    return{"code":code,"success":True }
+    return{"success":True,"data":result_string }
 
 
 @app.route('/data', methods=['POST'])
