@@ -18,7 +18,7 @@ def generate_zpl():
     label_pos = "^FT"
     label_text_tag = "^FD" 
 
-    change_font = "^CF0,30"
+    change_font = "^CFA,30"
     start_of_field ="^FO"
     end_of_field = "^FS"
     input_text = ['product_code','product_name','customer_code','customer_name']
@@ -45,28 +45,28 @@ def generate_zpl():
 
     input_field = "product_name"
 
-    x_start_label = 120 
-    y_start_label = 90
+    x_start_label = 80 
+    y_start_label = 130
 
-    x_start_value = 370
-    y_start_value = 90
+    x_start_value = 350
+    y_start_value = 130
 
     
-    y_diff_label = 30
-    y_diff_value = 30
+    y_diff_label = 40
+    y_diff_value = 40
 
     #start_of_head = "^CF0,60" 
-    head = start_of_field+str(x_start_label) +","+str(30)+label_text_tag+company_name+end_of_field
+    head = start_of_field+str(330) +","+str(20)+label_text_tag+company_name+end_of_field
 
     code = []
     code.append(start)
-    code.append("^CF0,30")
+    code.append("^CF0,60")
     code.append(head)
-
-    address = start_of_field+str(x_start_label) +","+str(60)+label_text_tag+address+end_of_field
+    code.append("^CF0,40")
+    address = start_of_field+str(360) +","+str(80)+label_text_tag+address+end_of_field
     
     code.append(address)
-    code.append(change_font)
+    code.append("^CFA,30")
     
     for num in range(0, len(input_text)):
         print("_____________________________",input_text[num])
@@ -104,7 +104,7 @@ def generate_zpl():
 
     if is_barcode == True:
         #zpl with barcode
-        barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BY3" + "^BCN,100,Y,N,N" + "^FD" + items +"^FS"
+        barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BY3" + "^BCN,100,Y,N,N" + items +"^FS"
         code.append(barcode)
     elif is_qrcode == True:
         #^FO100,100^BQN,2,4
@@ -133,7 +133,7 @@ def generate_zpl():
     #         + f"Time:{data['time']}^FS
 
 
-    f = open("label.zpl", "w")
+    f = open("label1.zpl", "w")
     f.write(result_string)
     f.close()
 
