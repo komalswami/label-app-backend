@@ -6,6 +6,19 @@ import numpy as np
 app = Flask(__name__)
 CORS(app) 
 
+def save_var_list(input_label):
+    conn = sqlite3.connect('database.db') 
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS string_lists (
+                      id INTEGER PRIMARY KEY,
+                      list_name TEXT,
+                      strings TEXT)''')
+    list_name = '1'
+    strings_str = ';'.join(input_label)  # Convert the list of strings to a semicolon-separated string
+    cursor.execute('''INSERT INTO string_lists (list_name, strings)
+                      VALUES (?, ?)''', (list_name, strings_str))
+    conn.commit()
+
 @app.route('/generate_zpl', methods=['POST'])
 def generate_zpl():
 
@@ -21,9 +34,10 @@ def generate_zpl():
     change_font = "^CFA,30"
     start_of_field ="^FO"
     end_of_field = "^FS"
-    input_text = ['product_code','product_name','customer_code','customer_name']
-    input_label = ['product_code','product_name','customer_code','customer_name']
+    input_text = ['product code','product name','customer name','net weight']
+    input_label = ['product_code','product_name','customer_name','net_weight']
     
+    save_var_list(input_label)
     # is_barcode = data['is_barcode']
     # is_qrcode = data['is_qrcode']
     # input_text = data['label_text']
@@ -38,9 +52,8 @@ def generate_zpl():
     # ^BCN,100,Y,N,N
     # ^FD123456^FS
 
-    is_barcode = True
+    is_barcode = False
     is_qrcode = False
-
 
 
     input_field = "product_name"
@@ -78,12 +91,14 @@ def generate_zpl():
         # f"{data['total_weight']}"
         ## f"{data[+'input_label[num]+']}"
 
-        value1 = 'f'
-        doub = '"'
-        value2 = "{data['"
-        value3 = """']}"""
+        # value1 = 'f'
+        # doub = '"'
+        # value2 = "{data['"
+        # value3 = """']}"""
 
-        value = value1 + doub + value2 + input_label[num] + value3 + doub
+        # value = value1 + doub + value2 + input_label[num] + value3 + doub
+
+        value = input_label[num]
         
         # original_string = 'This is a "{}" word'
         # formatted_string = original_string.format('quoted')
@@ -133,7 +148,8 @@ def generate_zpl():
     #         + f"Time:{data['time']}^FS
 
 
-    f = open("label1.zpl", "w")
+
+    f = open("../Counting-backend/label1.zpl", "w")
     f.write(result_string)
     f.close()
 
