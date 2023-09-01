@@ -6,16 +6,16 @@ import numpy as np
 app = Flask(__name__)
 CORS(app) 
 
-def save_var_list(input_label):
+def save_var_list(list_name,input_label):
     conn = sqlite3.connect('database.db') 
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS string_lists (
+    # store values of label values
+    cursor.execute('''CREATE TABLE IF NOT EXISTS label_values (
                       id INTEGER PRIMARY KEY,
                       list_name TEXT,
                       strings TEXT)''')
-    list_name = '1'
     strings_str = ';'.join(input_label)  # Convert the list of strings to a semicolon-separated string
-    cursor.execute('''INSERT INTO string_lists (list_name, strings)
+    cursor.execute('''INSERT INTO label_values (list_name, strings)
                       VALUES (?, ?)''', (list_name, strings_str))
     conn.commit()
 
@@ -34,10 +34,22 @@ def generate_zpl():
     change_font = "^CFA,30"
     start_of_field ="^FO"
     end_of_field = "^FS"
+    
+    # comment below lines 
     input_text = ['product code','product name','customer name','net weight']
     input_label = ['product_code','product_name','customer_name','net_weight']
+    company_name = "company name"
+    address = "address"
+    is_barcode = False
+    is_qrcode = True
+
+
+    # function call to save database values
+
+    save_var_list("label1",input_label)
     
-    save_var_list(input_label)
+    # uncomment below variables to handle input from frontend
+
     # is_barcode = data['is_barcode']
     # is_qrcode = data['is_qrcode']
     # input_text = data['label_text']
@@ -45,18 +57,7 @@ def generate_zpl():
     # company_name = data['company_name']
     # address = data['address']'
 
-    company_name = "company name"
-    address = "address"
-
-    # ^FO100,100^BY3
-    # ^BCN,100,Y,N,N
-    # ^FD123456^FS
-
-    is_barcode = False
-    is_qrcode = False
-
-
-    input_field = "product_name"
+ 
 
     x_start_label = 80 
     y_start_label = 130
@@ -87,23 +88,9 @@ def generate_zpl():
         
         y_start_label = y_start_label+y_diff_label
         y_start_value = y_start_value + y_diff_value
-        
-        # f"{data['total_weight']}"
-        ## f"{data[+'input_label[num]+']}"
-
-        # value1 = 'f'
-        # doub = '"'
-        # value2 = "{data['"
-        # value3 = """']}"""
-
-        # value = value1 + doub + value2 + input_label[num] + value3 + doub
 
         value = input_label[num]
         
-        # original_string = 'This is a "{}" word'
-        # formatted_string = original_string.format('quoted')
-        
-        #print(doub)
         print(value)
         total_var =start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+value+end_of_field
         print("-----------------------------  val in for loop----------------------------",total_var)
@@ -112,7 +99,7 @@ def generate_zpl():
     items = ""
     #data for barcode
     for num in range(0, len(input_text)):
-        item = 'f' + '"'+input_text[num] + ":"+ "{data['" + input_label[num] + "']}" + '"'
+        item = input_text[num] + ":"+ input_label[num]
         items+= "+"+item
     
     print("------------------------------ items ----------------------------",items)
@@ -122,9 +109,7 @@ def generate_zpl():
         barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BY3" + "^BCN,100,Y,N,N" + items +"^FS"
         code.append(barcode)
     elif is_qrcode == True:
-        #^FO100,100^BQN,2,4
-        #^FDMM,AAC-42^FS
-        barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BQN,2,4 ^FDMM,AAC-42" +"^FS"
+        barcode =  "^FO"+str(x_start_label)+","+str(y_start_label+y_diff_value)+"^BQN,2,4 ^FDMM"+items +"^FS"
         code.append(barcode)
     else:
         #zpl without qr barcode
