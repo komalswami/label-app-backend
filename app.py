@@ -19,13 +19,7 @@ def save_var_list(list_name,input_label):
                       VALUES (?, ?)''', (list_name, strings_str))
     conn.commit()
 
-@app.route('/generate_zpl', methods=['POST'])
 def generate_zpl():
-
-    print("hello world!")
-    #data = request.get_json()
-
-    #print("hello world!",data)
     start = "^XA"
     end = "^XZ"
     label_pos = "^FT"
@@ -35,29 +29,25 @@ def generate_zpl():
     start_of_field ="^FO"
     end_of_field = "^FS"
     
-    # comment below lines 
-    input_text = ['product code','product name','customer name','net weight']
-    input_label = ['product_code','product_name','customer_name','net_weight']
-    company_name = "company name"
-    address = "address"
-    is_barcode = False
-    is_qrcode = True
-
-
-    # function call to save database values
-
-    save_var_list("label1",input_label)
+    data = request.get_json()
+    print("****************************************",data)
+    is_barcode = data['is_barcode']
+    is_qrcode = data['is_qrcode']
     
-    # uncomment below variables to handle input from frontend
-
-    # is_barcode = data['is_barcode']
-    # is_qrcode = data['is_qrcode']
-    # input_text = data['label_text']
-    # input_label = data['label_values']
-    # company_name = data['company_name']
-    # address = data['address']'
-
- 
+    input_text = data['label_text']
+    input_label = data['label_values']
+    
+    company_name = data['company_name']
+    address = data['company_address']
+    
+    line_co_ordinates = data['line_co_ordinates']
+    
+    selected_element_co_text = data['selected_element_co_text']
+    selected_element_co_label = data['selected_element_co_label']
+    
+    rect_co_ordinates = data['rect_co_ordinates']
+    
+    save_var_list("label1",input_label)
 
     x_start_label = 80 
     y_start_label = 130
@@ -69,7 +59,6 @@ def generate_zpl():
     y_diff_label = 40
     y_diff_value = 40
 
-    #start_of_head = "^CF0,60" 
     head = start_of_field+str(330) +","+str(20)+label_text_tag+company_name+end_of_field
 
     code = []
@@ -82,27 +71,95 @@ def generate_zpl():
     code.append(address)
     code.append("^CFA,30")
     
+    input_text_x = []
+    input_text_y = []
+    input_label_x  = []
+    input_label_y = []
+
+    for item in selected_element_co_text:
+        if(item is not None):
+            #print("***************************************************",item['x1'], item['y1'])
+            input_text_x.append(item['x1'])
+            input_text_y.append(item['y1'])
+
+    for item in selected_element_co_label:
+        if(item is not None):
+            #print("********************************************************",item['x1'], item['y1'])
+            input_label_x.append(item['x1'])
+            input_label_y.append(item['y1'])
+    
+    line_coordinates_x1 = []
+    line_coordinates_y1 = []
+    line_coordinates_x2 = []
+    line_coordinates_y2 = []
+
+    for item in line_co_ordinates:
+        if(item is not None):
+            line_coordinates_x1.append(item['x1'])
+            line_coordinates_y1.append(item['y1'])
+            line_coordinates_x2.append(item['x2'])
+            line_coordinates_y2.append(item['y2'])
+
+
     for num in range(0, len(input_text)):
         print("_____________________________",input_text[num])
         print("******************************",input_label[num])
         
-        y_start_label = y_start_label+y_diff_label
-        y_start_value = y_start_value + y_diff_value
+        #y_start_label = y_start_label+y_diff_label
+        #y_start_value = y_start_value + y_diff_value
 
-        value = input_label[num]
+        #value = input_label[num]
         
-        print(value)
-        total_var =start_of_field +str(x_start_label)+","+str(y_start_label)+label_text_tag+input_text[num]+end_of_field +start_of_field +str(x_start_value)+","+str(y_start_value)+label_text_tag+value+end_of_field
-        print("-----------------------------  val in for loop----------------------------",total_var)
+        #print("--------------------------------------------------------------------------------",num)
+        total_var =start_of_field +str(input_text_x[num])+","+str(input_text_y[num])+label_text_tag+input_text[num]+end_of_field +start_of_field +str(input_label_x[num])+","+str(input_label_y[num])+label_text_tag+ input_label[num] +end_of_field
+        #print("-----------------------------  val in for loop----------------------------",total_var)
         code.append(total_var)
     
     items = ""
     #data for barcode
     for num in range(0, len(input_text)):
         item = input_text[num] + ":"+ input_label[num]
-        items+= "+"+item
+        items+= " "+item
     
-    print("------------------------------ items ----------------------------",items)
+    
+    # y diff = < 5  ----> horizontal line   // y are same    
+    # x diff = <5 -------------> vertical line // x are same 
+
+    for num in range(0,len(line_coordinates_x1)):
+        if((line_coordinates_x2[num] - line_coordinates_x1[num]) <= 10):              
+            # distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+            distance = math.sqrt((line_coordinates_x2[num] - line_coordinates_x1[num])**2 + (line_coordinates_y2[num]-line_coordinates_y1[num])**2)
+            distance = "1," + str(distance)
+            line = "^FO" + str(line_coordinates_x1[num]) + "," + str(line_coordinates_y1[num]) + "^GB"+ distance + ",1" +"^FS" 
+            code.append(line)
+        else:  
+            distance = math.sqrt((line_coordinates_x2[num] - line_coordinates_x1[num])**2 + (line_coordinates_y2[num]-line_coordinates_y1[num])**2)
+            distance = str(distance) + ",1"
+            line = "^FO" + str(line_coordinates_x1[num]) + "," + str(line_coordinates_y1[num]) + "^GB"+ distance + ",1" +"^FS" 
+            code.append(line)
+    
+    line_coordinates_rect_x1 = []
+    line_coordinates_rect_x2 = []
+    line_coordinates_rect_y1 = []
+    line_coordinates_rect_y2 = []
+
+    for item in rect_co_ordinates:
+        if(item is not None):
+            print(item)
+            line_coordinates_rect_x1.append(item['x1'])
+            line_coordinates_rect_x2.append(item['x2'])
+            line_coordinates_rect_y1.append(item['y1'])
+            line_coordinates_rect_y2.append(item['y2'])
+    
+    print("line coordinates rect  x1 ",line_coordinates_rect_x1)
+    print("line coordinates rect  x2 ",line_coordinates_rect_x2)
+    print("line coordinates rect  y1 ",line_coordinates_rect_y1)
+    print("line coordinates rect  y2 ",line_coordinates_rect_y2)
+
+    for num in range(0,len(line_coordinates_rect_x1)):
+        rectangle = "^FO" + str(line_coordinates_rect_x1[num]) + "," + str(line_coordinates_rect_y1[num]) + "^GB" + str(line_coordinates_rect_x2[num]) + "," + str(line_coordinates_rect_y2[num]) + "^FS"
+        print("******************  rectangle *********************** ",rectangle)
+        code.append(rectangle)
 
     if is_barcode == True:
         #zpl with barcode
@@ -121,52 +178,14 @@ def generate_zpl():
     delimiter = ','  # Delimiter to be used between elements
 
     result_string = delimiter.join(code)
-    print(result_string)  # Output: 'apple, banana, cherry'
+    print(result_string)  
 
-    # f"^FO300,490^BQN,2,4^FD Customer : {data['customer_name']}"
-    #         + f"Item Description: {data['product_name']}"
-    #         + f"Part / DRG No: {data['product_code']}"
-    #         + f"Quantity: {data['quantity']} Nos"
-    #         + f"Batch No: {data['batch_code']}"
-    #         + f"Net Weight: {data['net_weight']} g"
-    #         + f"MFG Date:{data['timestamp']} "
-    #         + f"Time:{data['time']}^FS
-
-
-
-    f = open("../Counting-backend/label1.zpl", "w")
+    f = open("label1.zpl", "w")
     f.write(result_string)
     f.close()
 
-    #total = np.array(code)
-    #print(start+label_pos+label_text+input_field+end)
-    #print(total)
+    return{"success":True}
 
-    return{"success":True,"data":result_string }
-
-
-@app.route('/data', methods=['POST'])
-def accept_data():
-    #data = request.json  # Assuming the data is sent in JSON format
-    
-    #print(data)
-    # Process the data as needed
-
-    conn = sqlite3.connect('database.db')
-    print("Opened database successfully")
-
-    #conn.execute('CREATE TABLE students (name TEXT, addr TEXT, city TEXT, pin TEXT)')
-    conn.execute('CREATE TABLE units_table (id int, name TEXT)')
-    conn.execute('CREATE TABLE date_time_table (id int, date TEXT,time TEXT,datetime TEXT)')
-    conn.execute('CREATE TABLE labels_table(id int, name TEXT)')
-    
-
-    print("Table created successfully")
-    conn.close()
-    
-    return jsonify({'message': 'Data received successfully'}), 200
-
-@app.route('/select_labels', methods=['GET'])
 def select_labels():
     """
     Query all rows in the tasks table
@@ -196,7 +215,6 @@ def select_labels():
     return {"success": True,"data":list_of_dicts}
     #return jsonify({'data':rows}), 200
 
-@app.route('/select_units', methods=['GET'])
 def select_units():
     """
     Query all rows in the tasks table
@@ -222,7 +240,60 @@ def select_units():
 
     return {"success": True,"data":list_of_dicts}
 
-@app.route('/select_date_time', methods=['GET'])
+def select_labels():
+    """
+    Query all rows in the tasks table
+    :param conn: the Connection object
+    :return:
+    """
+    conn = sqlite3.connect('database.db')
+    print("Opened database successfully")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM labels_table")
+
+    rows = cur.fetchall()
+
+    print("rows",rows)
+
+    conn.close()
+
+    # Convert the results to a list of dictionaries
+    columns = [col[0] for col in cur.description]
+    list_of_dicts = [dict(zip(columns, row)) for row in rows]
+
+    # Print the list of dictionaries
+    for item in list_of_dicts:
+        print(item)
+
+
+    return {"success": True,"data":list_of_dicts}
+    #return jsonify({'data':rows}), 200
+
+def select_units():
+    """
+    Query all rows in the tasks table
+    :param conn: the Connection object
+    :return:
+    """
+    conn = sqlite3.connect('database.db')
+    print("Opened database successfully")
+    cur = conn.cursor()
+    cur.execute("SELECT name FROM units_table")
+
+    rows = cur.fetchall()
+    
+    columns = [col[0] for col in cur.description]
+    list_of_dicts = [dict(zip(columns, row)) for row in rows]
+
+    conn.close()
+
+    # Print the list of dictionaries
+    for item in list_of_dicts:
+        print(item)
+
+
+    return {"success": True,"data":list_of_dicts}
+
 def select_date_time():
     """
     Query all rows in the tasks table
@@ -247,6 +318,3 @@ def select_date_time():
 
 
     return {"success": True,"data":list_of_dicts}
-
-if __name__ == '__main__':
-    app.run(debug=True,port=4000)
